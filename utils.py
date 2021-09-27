@@ -37,9 +37,9 @@ def plot_data(data, titles=None, filename=None):
         axes[i][0].set_aspect(2.5, adjustable='box')
         axes[i][0].set_ylim(0, 80)
         axes[i][0].set_title(titles[i], fontsize='medium')
-        axes[i][0].tick_params(labelsize='x-small', left=False, labelleft=False) 
+        axes[i][0].tick_params(labelsize='x-small', left=False, labelleft=False)
         axes[i][0].set_anchor('W')
-    
+
     plt.savefig(filename, dpi=200)
     plt.close()
 
@@ -105,7 +105,7 @@ def pad(input_ele, mel_max_length=None):
         out_list.append(one_batch_padded)
     out_padded = torch.stack(out_list)
     return out_padded
-    
+
 
 class AttrDict(dict):
     def __init__(self, *args, **kwargs):

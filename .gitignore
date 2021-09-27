@@ -2,3 +2,5 @@
 __pycache__
 dataset/*
 exp*
+results/
+audio_test

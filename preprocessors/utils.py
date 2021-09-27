@@ -1,4 +1,4 @@
-import numpy as np 
+import numpy as np
 
 def get_alignment(tier, sampling_rate, hop_length):
     sil_phones = ['sil', 'sp', 'spn', '']
@@ -27,7 +27,6 @@ def get_alignment(tier, sampling_rate, hop_length):
     # Trimming tailing silences
     phones = phones[:end_idx]
     durations = durations[:end_idx]
-    
     return phones, durations, start_time, end_time
 
 
@@ -47,11 +46,13 @@ def remove_outlier(x, p_bottom: int = 25, p_top: int = 75):
     for ind, value in enumerate(x):
         if is_outlier(value, p_bottom, p_top):
             indices_of_outliers.append(ind)
+    for i in indices_of_outliers:
+        x[i] = 0.0
+    maximum = np.max(x)
+    for i in indices_of_outliers:
+        x[i] = maximum
+    return x
 
-    x[indices_of_outliers] = 0.0
-    x[indices_of_outliers] = np.max(x)
-    return 
-    
 def average_by_duration(x, durs):
     length = sum(durs)
     durs_cum = np.cumsum(np.pad(durs, (1, 0), mode='constant'))
@@ -68,5 +69,5 @@ def average_by_duration(x, durs):
     return x_char.astype(np.float32)
 
 
- 
+
 

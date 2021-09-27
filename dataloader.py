@@ -14,11 +14,11 @@ def prepare_dataloader(data_path, filename, batch_size, shuffle=True, num_worker
         sampler = None
     shuffle = shuffle if sampler is None else None
     if meta_learning:
-        loader = DataLoader(dataset, batch_sampler=sampler, 
-                        collate_fn=dataset.collate_fn, num_workers=num_workers, pin_memory=True) 
+        loader = DataLoader(dataset, batch_sampler=sampler,
+                        collate_fn=dataset.collate_fn, num_workers=num_workers, pin_memory=True)
     else:
-        loader = DataLoader(dataset, sampler=sampler, batch_size=batch_size, shuffle=shuffle, 
-                        collate_fn=dataset.collate_fn, drop_last=True, num_workers=num_workers) 
+        loader = DataLoader(dataset, sampler=sampler, batch_size=batch_size, shuffle=shuffle,
+                        collate_fn=dataset.collate_fn, drop_last=True, num_workers=num_workers)
     return loader
 
 
@@ -34,7 +34,7 @@ def norm_mean_std(x, mean, std):
 
 
 class TextMelDataset(Dataset):
-    def __init__(self, data_path, filename="train.txt",):
+    def __init__(self, data_path, filename="metadata.csv",):
         self.data_path = data_path
         self.basename, self.text, self.sid = process_meta(os.path.join(data_path, filename))
 
@@ -45,17 +45,17 @@ class TextMelDataset(Dataset):
         stats_config = json.loads(data)
         self.f0_stat = stats_config["f0_stat"] # max, min, mean, std
         self.energy_stat = stats_config["energy_stat"] # max, min, mean, std
-        
+
         self.create_sid_to_index()
         print('Speaker Num :{}'.format(len(self.sid_dict)))
-    
+
     def create_speaker_table(self, sids):
         speaker_ids = np.sort(np.unique(sids))
         d = {speaker_ids[i]: i for i in range(len(speaker_ids))}
         return d
 
     def create_sid_to_index(self):
-        _sid_to_indexes = {} 
+        _sid_to_indexes = {}
         # for keeping instance indexes with the same speaker ids
         for i, sid in enumerate(self.sid):
             if sid in _sid_to_indexes:
@@ -72,22 +72,22 @@ class TextMelDataset(Dataset):
         sid = self.sid_dict[self.sid[idx]]
         phone = np.array(text_to_sequence(self.text[idx], []))
         mel_path = os.path.join(
-            self.data_path, "mel", "libritts-mel-{}.npy".format(basename))
+            self.data_path, "mel", "jared-mel-{}.npy".format(basename))
         mel_target = np.load(mel_path)
         D_path = os.path.join(
-            self.data_path, "alignment", "libritts-ali-{}.npy".format(basename))
+            self.data_path, "alignment", "jared-ali-{}.npy".format(basename))
         D = np.load(D_path)
         f0_path = os.path.join(
-            self.data_path, "f0", "libritts-f0-{}.npy".format(basename))
+            self.data_path, "f0", "jared-f0-{}.npy".format(basename))
         f0 = np.load(f0_path)
         f0 = replace_outlier(f0,  self.f0_stat[0], self.f0_stat[1])
         f0 = norm_mean_std(f0, self.f0_stat[2], self.f0_stat[3])
         energy_path = os.path.join(
-            self.data_path, "energy", "libritts-energy-{}.npy".format(basename))
+            self.data_path, "energy", "jared-energy-{}.npy".format(basename))
         energy = np.load(energy_path)
         energy = replace_outlier(energy, self.energy_stat[0], self.energy_stat[1])
         energy = norm_mean_std(energy, self.energy_stat[2], self.energy_stat[3])
-        
+
         sample = {"id": basename,
                 "sid": sid,
                 "text": phone,
@@ -95,7 +95,7 @@ class TextMelDataset(Dataset):
                 "D": D,
                 "f0": f0,
                 "energy": energy}
-                
+
         return sample
 
     def reprocess(self, batch, cut_list):
@@ -108,7 +108,7 @@ class TextMelDataset(Dataset):
         energies = [batch[ind]["energy"] for ind in cut_list]
         for text, D, id_ in zip(texts, Ds, ids):
             if len(text) != len(D):
-                print(text, text.shape, D, D.shape, id_)
+                print(text.shape, D.shape, id_)
         length_text = np.array(list())
         for text in texts:
             length_text = np.append(length_text, text.shape[0])
@@ -116,7 +116,7 @@ class TextMelDataset(Dataset):
         length_mel = np.array(list())
         for mel in mel_targets:
             length_mel = np.append(length_mel, mel.shape[0])
-        
+
         texts = pad_1D(texts)
         Ds = pad_1D(Ds)
         mel_targets = pad_2D(mel_targets)
@@ -134,7 +134,7 @@ class TextMelDataset(Dataset):
                "energy": energies,
                "src_len": length_text,
                "mel_len": length_mel}
-        
+
         return out
 
     def collate_fn(self, batch):
@@ -155,8 +155,8 @@ class MetaBatchSampler():
 
         self.sid_to_idx = sid_to_idx
         self.batch_size = batch_size
-        self.max_iter = max_iter       
-        
+        self.max_iter = max_iter
+
     def __iter__(self):
         for _ in range(self.max_iter):
             selected_sids = np.random.choice(self.sids, self.batch_size, replace=False)
