@@ -207,19 +207,19 @@ class Preprocessor:
 
         assert f0.shape[0] == len(duration) == energy.shape[0]
         # Save alignment
-        # ali_filename = '{}-ali-{}.npy'.format(dataset, basename)
-        # np.save(os.path.join(out_dir, 'alignment', ali_filename), duration, allow_pickle=False)
+        ali_filename = '{}-ali-{}.npy'.format(dataset, basename)
+        np.save(os.path.join(out_dir, 'alignment', ali_filename), duration, allow_pickle=False)
 
         # Save fundamental frequency
-        # f0_filename = '{}-f0-{}.npy'.format(dataset, basename)
-        # np.save(os.path.join(out_dir, 'f0', f0_filename), f0, allow_pickle=False)
+        f0_filename = '{}-f0-{}.npy'.format(dataset, basename)
+        np.save(os.path.join(out_dir, 'f0', f0_filename), f0, allow_pickle=False)
 
         # Save energy
-        # energy_filename = '{}-energy-{}.npy'.format(dataset, basename)
-        # np.save(os.path.join(out_dir, 'energy', energy_filename), energy, allow_pickle=False)
+        energy_filename = '{}-energy-{}.npy'.format(dataset, basename)
+        np.save(os.path.join(out_dir, 'energy', energy_filename), energy, allow_pickle=False)
 
         # Save spectrogram
-        # mel_filename = '{}-mel-{}.npy'.format(dataset, basename)
-        # np.save(os.path.join(out_dir, 'mel', mel_filename), mel_spectrogram.T, allow_pickle=False)
+        mel_filename = '{}-mel-{}.npy'.format(dataset, basename)
+        np.save(os.path.join(out_dir, 'mel', mel_filename), mel_spectrogram.T, allow_pickle=False)
 
         return '|'.join([basename, text, sid]), list(f0), list(energy), mel_spectrogram.shape[1]
