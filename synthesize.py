@@ -13,7 +13,6 @@ from text import text_to_sequence
 import audio as Audio
 import utils
 
-
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -67,12 +66,11 @@ def get_StyleSpeech(config, checkpoint_path):
     return model
 
 
-def synthesize(args, model, _stft):   
+def synthesize(args, model, _stft):
     # preprocess audio and text
     ref_mel = preprocess_audio(args.ref_audio, _stft).transpose(0,1).unsqueeze(0)
     src = preprocess_english(args.text, args.lexicon_path).unsqueeze(0)
     src_len = torch.from_numpy(np.array([src.shape[1]])).to(device=device)
-    
     save_path = args.save_path
     if not os.path.exists(save_path):
         os.makedirs(save_path, exist_ok=True)
@@ -82,19 +80,20 @@ def synthesize(args, model, _stft):
 
     # Forward
     mel_output = model.inference(style_vector, src, src_len)[0]
-    
     mel_ref_ = ref_mel.cpu().squeeze().transpose(0, 1).detach()
     mel_ = mel_output.cpu().squeeze().transpose(0, 1).detach()
 
+    np.save(os.path.join(args.save_path, "synthesized.npy"), mel_)
+
     # plotting
-    utils.plot_data([mel_ref_.numpy(), mel_.numpy()], 
+    utils.plot_data([mel_ref_.numpy(), mel_.numpy()],
         ['Ref Spectrogram', 'Synthesized Spectrogram'], filename=os.path.join(save_path, 'plot.png'))
     print('Generate done!')
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--checkpoint_path", type=str, required=True, 
+    parser.add_argument("--checkpoint_path", type=str, required=True,
         help="Path to the pretrained model")
     parser.add_argument('--config', default='configs/config.json')
     parser.add_argument("--save_path", type=str, default='results/')
@@ -104,7 +103,7 @@ if __name__ == "__main__":
         help="raw text to synthesize")
     parser.add_argument("--lexicon_path", type=str, default='lexicon/librispeech-lexicon.txt')
     args = parser.parse_args()
-    
+
     with open(args.config) as f:
         data = f.read()
     json_config = json.loads(data)

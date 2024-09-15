@@ -3,7 +3,7 @@ import preprocessors.libritts as libritts
 
 def main(data_path, sr):
     libritts.prepare_align_and_resample(data_path, sr)
-    
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

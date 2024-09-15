@@ -1,9 +1,9 @@
 {
-    "dataset": "LibriTTS",
-    "n_speakers": 1124,
+    "dataset": "jared",
+    "n_speakers": 1,
 
     "text_cleaners": ["english_cleaners"],
-    
+
     "sampling_rate": 16000,
     "filter_length": 1024,
     "hop_length": 256,

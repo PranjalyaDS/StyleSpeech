@@ -19,7 +19,7 @@ Few modifications on the Variance Adaptor wich were found to improve the quality
 
 Getting the pretrained models
 ----------
-| Model | Link to the model | 
+| Model | Link to the model |
 | :-------------: | :---------------: |
 | Meta-StyleSpeech | [Link](https://drive.google.com/file/d/1xGLGt6bK7IapiKNj9YliMBmP5MCBv9OR/view?usp=sharing) |
 | StyleSpeech | [Link](https://drive.google.com/file/d/1Q7yLKnFH4UkOjaszikjaovItNAaTyEVN/view?usp=sharing)  |
@@ -44,16 +44,16 @@ Preprocessing the dataset
 -------------
 Our models are trained on [LibriTTS dataset](https://openslr.org/60/). Download, extract and place it in the `dataset/` folder.
 
-To preprocess the dataset : 
-First, run 
+To preprocess the dataset :
+First, run
 ```bash
-python prepare_align.py 
+python prepare_align.py
 ```
 to resample audios to 16kHz and for some other preperations.
 
 Second, [Montreal Forced Aligner](https://montreal-forced-aligner.readthedocs.io/en/latest/) (MFA) is used to obtain the alignments between the utterances and the phoneme sequences.
 ```bash
-./montreal-forced-aligner/bin/mfa_align dataset/wav16/ lexicon/librispeech-lexicon.txt  english datset/TextGrid/ -j 10 -v
+./montreal-forced-aligner/bin/mfa_align dataset/wav16/ lexicon/librispeech-lexicon.txt  english dataset/TextGrid/ -j 10 -v
 ```
 
 Third, preprocess the dataset to prepare mel-spectrogram, duration, pitch and energy for fast training.
@@ -65,7 +65,7 @@ Train!
 -------------
 Train the StyleSpeech from the scratch with
 ```bash
-python train.py 
+python train.py
 ```
 
 Train the Meta-StyleSpeech from pretrained StyleSpeech with

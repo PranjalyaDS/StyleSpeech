@@ -37,7 +37,7 @@ def write_single(output_folder, wav_fname, text, resample_rate, top_db=None):
 
 
 def prepare_align_and_resample(data_dir, sr):
-    wav_foder_names = ['train-clean-100', 'train-clean-360']
+    wav_foder_names = ['jared']
     wavs = []
     for wav_folder in wav_foder_names:
         wav_folder = os.path.join(data_dir, wav_folder)
@@ -49,9 +49,9 @@ def prepare_align_and_resample(data_dir, sr):
             os.mkdir(output_wavs_folder)
 
         for wav_fname in wav_fname_list:
-            _sid = wav_fname.split('/')[-3]
+            _sid = "jared"
             output_folder = os.path.join(output_wavs_folder, _sid)
-            txt_fname = wav_fname.replace('.wav','.normalized.txt')
+            txt_fname = wav_fname.replace('.wav','.txt')
             with open(txt_fname, 'r') as f:
                 text = f.readline().strip()
             text = _clean_text(text, ['english_cleaners'])
@@ -78,13 +78,13 @@ class Preprocessor:
         self.max_seq_len = config["max_seq_len"]
 
         self.STFT = Audio.stft.TacotronSTFT(
-            config["preprocessing"]["stft"]["filter_length"],
-            config["preprocessing"]["stft"]["hop_length"],
-            config["preprocessing"]["stft"]["win_length"],
-            config["preprocessing"]["mel"]["n_mel_channels"],
-            config["preprocessing"]["audio"]["sampling_rate"],
-            config["preprocessing"]["mel"]["mel_fmin"],
-            config["preprocessing"]["mel"]["mel_fmax"],
+            config["filter_length"],
+            config["hop_length"],
+            config["win_length"],
+            config["n_mel_channels"],
+            config["sampling_rate"],
+            config["mel_fmin"],
+            config["mel_fmax"],
         )
 
     def write_metadata(self, data_dir, out_dir):
@@ -94,8 +94,7 @@ class Preprocessor:
             lines = []
             for wav_fname in wav_fname_list:
                 basename = wav_fname.split('/')[-1].replace('.wav', '')
-                sid = wav_fname.split('/')[-2]
-                assert sid in basename
+                sid = "jared"
                 txt_fname = wav_fname.replace('.wav', '.txt')
                 with open(txt_fname, 'r') as f:
                     text = f.readline().strip()
@@ -122,7 +121,7 @@ class Preprocessor:
             )
         results = [ r for r in results if r is not None ]
         for r in results:
-            datas.extend(r[0])
+            datas.append(r[0])
             f0.extend(r[1])
             energy.extend(r[2])
             n_frames += r[3]
@@ -144,22 +143,22 @@ class Preprocessor:
             "total_time": total_time,
             "n_frames": n_frames,
             "f0_stat": [f0_max, f0_min, f0_mean, f0_std],
-            "energy_state": [energy_max, energy_min, energy_mean, energy_std]
+            "energy_stat": [energy_max, energy_min, energy_mean, energy_std]
         }
         with open(os.path.join(out_dir, 'stats.json'), 'w') as f:
             json.dump(f_json, f)
-        
+
         return datas
 
 
-    def process_utterance(self, in_dir, out_dir, basename, dataset='libritts'):
-        sid = basename.split('_')[0]
-        wav_path = os.path.join(in_dir, 'wav{}', sid, '{}.wav'.format(self.sampling_rate//1000, basename))
-        tg_path = os.path.join(out_dir, 'TextGrid', sid, '{}.TextGrid'.format(basename)) 
+    def process_utterance(self, in_dir, out_dir, basename, dataset='jared'):
+        sid = "jared"
+        wav_path = os.path.join(in_dir, f'wav{self.sampling_rate//1000}', sid, '{}.wav'.format(basename))
+        tg_path = os.path.join(out_dir, 'TextGrid', sid, '{}.TextGrid'.format(basename))
 
         if not os.path.exists(wav_path) or not os.path.exists(tg_path):
             return None
-        
+
         # Get alignments
         textgrid = tgt.io.read_textgrid(tg_path)
         phone, duration, start, end = get_alignment(textgrid.get_tier_by_name('phones'), self.sampling_rate, self.hop_length)
@@ -173,7 +172,7 @@ class Preprocessor:
         # Read and trim wav files
         wav, _ = librosa.load(wav_path)
         wav = wav[int(self.sampling_rate*start):int(self.sampling_rate*end)].astype(np.float32)
-        
+
         # Compute fundamental frequency
         _f0, t = pw.dio(wav.astype(np.float64), self.sampling_rate, frame_period=self.hop_length/self.sampling_rate*1000)
         f0 = pw.stonemask(wav.astype(np.float64), _f0, t, self.sampling_rate)
@@ -203,9 +202,10 @@ class Preprocessor:
         # Energy phoneme-level average
         energy = average_by_duration(np.array(energy), np.array(duration))
 
-        if len([f for f in f0 if f != 0]) ==0 or len([e for e in energy if e != 0]):
+        if len([f for f in f0 if f != 0]) == 0 or len([e for e in energy if e != 0]) == 0:
             return None
 
+        assert f0.shape[0] == len(duration) == energy.shape[0]
         # Save alignment
         ali_filename = '{}-ali-{}.npy'.format(dataset, basename)
         np.save(os.path.join(out_dir, 'alignment', ali_filename), duration, allow_pickle=False)

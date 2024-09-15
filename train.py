@@ -41,7 +41,7 @@ def main(args, c):
     print("Optimizer and Loss Function Defined.")
 
     # Get dataset
-    data_loader = prepare_dataloader(args.data_path, "train.txt", shuffle=True, batch_size=c.batch_size) 
+    data_loader = prepare_dataloader(args.data_path, "train.txt", shuffle=True, batch_size=c.batch_size)
     print("Data Loader is Prepared.")
 
     # Load checkpoint if exists
@@ -54,7 +54,7 @@ def main(args, c):
         current_step = 0
     checkpoint_path = os.path.join(args.save_path, 'ckpt')
     os.makedirs(checkpoint_path, exist_ok=True)
-    
+
     # Scheduled optimizer
     scheduled_optim = ScheduledOptim(optimizer, c.decoder_hidden, c.n_warm_up_step, current_step)
 
@@ -70,23 +70,23 @@ def main(args, c):
 
     # Training
     model.train()
-    while current_step < args.max_iter:        
+    while current_step < args.max_iter:
         # Get Training Loader
         for idx, batch in enumerate(data_loader):
 
             if current_step == args.max_iter:
                 break
-                
+
             # Get Data
             sid, text, mel_target, D, log_D, f0, energy, \
                     src_len, mel_len, max_src_len, max_mel_len = model.parse_batch(batch)
-                
+
             # Forward
             scheduled_optim.zero_grad()
             mel_output, src_output, style_vector, log_duration_output, f0_output, energy_output, src_mask, mel_mask, _  = model(
                     text, src_len, mel_target, mel_len, D, f0, energy, max_src_len, max_mel_len)
 
-            mel_loss, d_loss, f_loss, e_loss = Loss(mel_output, mel_target, 
+            mel_loss, d_loss, f_loss, e_loss = Loss(mel_output, mel_target,
                     log_duration_output, log_D, f0_output, f0, energy_output, energy, src_len, mel_len)
 
             # Total loss
@@ -99,7 +99,7 @@ def main(args, c):
             scheduled_optim.step_and_update_lr()
 
             # Print log
-            if current_step % args.log_step == 0 and current_step != 0:    
+            if current_step % args.log_step == 0 and current_step != 0:
                 t_l = total_loss.item()
                 m_l = mel_loss.item()
                 d_l = d_loss.item()
@@ -119,10 +119,10 @@ def main(args, c):
                 logger.add_scalar('Train/duration_loss', d_l, current_step)
                 logger.add_scalar('Train/f0_loss', f_l, current_step)
                 logger.add_scalar('Train/energy_loss', e_l, current_step)
-            
+
             # Save Checkpoint
             if current_step % args.save_step == 0 and current_step != 0:
-                torch.save({'model': model.state_dict(), 'optimizer': optimizer.state_dict(), 'step': current_step}, 
+                torch.save({'model': model.state_dict(), 'optimizer': optimizer.state_dict(), 'step': current_step},
                     os.path.join(checkpoint_path, 'checkpoint_{}.pth.tar'.format(current_step)))
                 print("*** Save Checkpoint ***")
                 print("Save model at step {}...\n".format(current_step))
@@ -132,10 +132,10 @@ def main(args, c):
                 mel_target = mel_target[0, :length].detach().cpu().transpose(0, 1)
                 mel = mel_output[0, :length].detach().cpu().transpose(0, 1)
                 # plotting
-                utils.plot_data([mel.numpy(), mel_target.numpy()], 
+                utils.plot_data([mel.numpy(), mel_target.numpy()],
                     ['Synthesized Spectrogram', 'Ground-Truth Spectrogram'], filename=os.path.join(synth_path, 'step_{}.png'.format(current_step)))
                 print("Synth spectrograms at step {}...\n".format(current_step))
-            
+
             if current_step % args.eval_step == 0 and current_step != 0:
                 model.eval()
                 with torch.no_grad():
@@ -153,10 +153,10 @@ def main(args, c):
                     logger.add_scalar('Validation/energy_loss', e_l, current_step)
                 model.train()
 
-            current_step += 1 
+            current_step += 1
 
     print("Training Done at Step : {}".format(current_step))
-    torch.save({'model': model.state_dict(), 'optimizer': scheduled_optim.state_dict(), 'step': current_step}, 
+    torch.save({'model': model.state_dict(), 'optimizer': scheduled_optim.state_dict(), 'step': current_step},
                 os.path.join(checkpoint_path, 'checkpoint_last_{}.pth.tar'.format(current_step)))
 
 
@@ -170,7 +170,7 @@ if __name__ == "__main__":
     parser.add_argument('--synth_step', default=1000, type=int)
     parser.add_argument('--eval_step', default=5000, type=int)
     parser.add_argument('--log_step', default=100, type=int)
-    parser.add_argument('--checkpoint_path', default=None, type=str, help='Path to the pretrained model') 
+    parser.add_argument('--checkpoint_path', default=None, type=str, help='Path to the pretrained model')
 
     args = parser.parse_args()
 
